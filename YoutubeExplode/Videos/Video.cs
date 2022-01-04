@@ -42,6 +42,7 @@ namespace YoutubeExplode.Videos
         /// Available search keywords for the video.
         /// </summary>
         public IReadOnlyList<string> Keywords { get; }
+        public string RelatedVideos { get; }
 
         /// <summary>
         /// Engagement statistics for the video.
@@ -60,7 +61,8 @@ namespace YoutubeExplode.Videos
             TimeSpan? duration,
             IReadOnlyList<Thumbnail> thumbnails,
             IReadOnlyList<string> keywords,
-            Engagement engagement)
+            Engagement engagement,
+            string relatedVideos)
         {
             Id = id;
             Title = title;
@@ -71,6 +73,7 @@ namespace YoutubeExplode.Videos
             Thumbnails = thumbnails;
             Keywords = keywords;
             Engagement = engagement;
+            RelatedVideos = relatedVideos;
         }
 
         /// <inheritdoc />

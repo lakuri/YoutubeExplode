@@ -41,6 +41,17 @@ namespace YoutubeExplode.Bridge.Extractors
                 .ParseLongOrNull()
         );
 
+        public JsonElement? TryGetRelatedVideos() => _memo.Wrap(() =>
+              _content
+                .GetElementsByTagName("script")
+                .Select(e => e.Text())
+                .Select(s => Regex.Match(s, @"var\s+ytInitialData\s*=\s*(\{.*\})").Groups[1].Value)
+                .FirstOrDefault(s => !string.IsNullOrWhiteSpace(s))?
+                .NullIfWhiteSpace()?
+                .Pipe(Json.Extract)
+                .Pipe(Json.TryParse) 
+        );
+
         private JsonElement? TryGetPlayerConfig() => _memo.Wrap(() =>
             _content
                 .GetElementsByTagName("script")

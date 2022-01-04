@@ -34,7 +34,7 @@ namespace YoutubeExplode.Search
         {
             var encounteredIds = new HashSet<string>(StringComparer.Ordinal);
             var continuationToken = default(string?);
-
+            int resultCount = 100;
             do
             {
                 var results = new List<ISearchResult>();
@@ -202,7 +202,8 @@ namespace YoutubeExplode.Search
                 yield return Batch.Create(results);
 
                 continuationToken = searchResults.TryGetContinuationToken();
-            } while (!string.IsNullOrWhiteSpace(continuationToken));
+                resultCount = encounteredIds.Count;
+            } while (!string.IsNullOrWhiteSpace(continuationToken) && resultCount<1000);
         }
 
         /// <summary>

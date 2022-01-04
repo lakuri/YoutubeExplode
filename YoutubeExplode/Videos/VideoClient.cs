@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using YoutubeExplode.Bridge;
 using YoutubeExplode.Common;
 using YoutubeExplode.Exceptions;
+using YoutubeExplode.Utils.Extensions;
 using YoutubeExplode.Videos.ClosedCaptions;
 using YoutubeExplode.Videos.Streams;
 
@@ -99,17 +100,46 @@ namespace YoutubeExplode.Videos
             var viewCount = playerResponse.TryGetVideoViewCount() ?? 0;
             var likeCount = watchPage.TryGetVideoLikeCount() ?? 0;
             var dislikeCount = watchPage.TryGetVideoDislikeCount() ?? 0;
+            var relatedVideosExtractor = watchPage.TryGetRelatedVideos();
+            string relatedVideos = string.Empty;
+            if (relatedVideosExtractor != null)
+            {
+                var relatedVideoList = relatedVideosExtractor.Value
+                    .GetPropertyOrNull("contents")?
+                    .GetPropertyOrNull("twoColumnWatchNextResults")?
+                    .GetPropertyOrNull("secondaryResults")?
+                    .GetPropertyOrNull("secondaryResults")?
+                    .GetPropertyOrNull("results")?
+                    .EnumerateArray()
+                    .ToList()
+                    .Where(rv => rv
+                            .GetPropertyOrNull("compactVideoRenderer")?
+                            .GetPropertyOrNull("videoId") != null
+                            )
+                    .Select(rv => rv
+                            .GetProperty("compactVideoRenderer")
+                            .GetProperty("videoId")
+                            .GetString()
+                            )
+                    .ToList();
+                if (relatedVideoList != null)
+                {
+                    relatedVideos = string.Join(",", relatedVideoList);
+                }
+            }
 
             return new Video(
                 videoId,
                 title,
+
                 new Author(channelId, channelTitle),
                 uploadDate,
                 description,
                 duration,
                 thumbnails,
                 keywords,
-                new Engagement(viewCount, likeCount, dislikeCount)
+                new Engagement(viewCount, likeCount, dislikeCount),
+                relatedVideos
             );
         }
     }
