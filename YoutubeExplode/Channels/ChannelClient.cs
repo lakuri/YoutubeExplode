@@ -10,104 +10,79 @@ using YoutubeExplode.Exceptions;
 using YoutubeExplode.Playlists;
 using YoutubeExplode.Utils.Extensions;
 
-namespace YoutubeExplode.Channels
+namespace YoutubeExplode.Channels;
+
+/// <summary>
+/// Operations related to YouTube channels.
+/// </summary>
+public class ChannelClient
 {
+    private readonly HttpClient _http;
+    private readonly ChannelController _controller;
+
     /// <summary>
-    /// Operations related to YouTube channels.
+    /// Initializes an instance of <see cref="ChannelClient"/>.
     /// </summary>
-    public class ChannelClient
+    public ChannelClient(HttpClient http)
     {
-        private readonly YoutubeController _controller;
+        _http = http;
+        _controller = new ChannelController(http);
+    }
 
-        /// <summary>
-        /// Initializes an instance of <see cref="ChannelClient"/>.
-        /// </summary>
-        public ChannelClient(HttpClient httpClient)
-        {
-            _controller = new YoutubeController(httpClient);
-        }
+    private Channel Extract(ChannelPageExtractor channelPage)
+    {
+        var channelId =
+            channelPage.TryGetChannelId() ??
+            throw new YoutubeExplodeException("Could not extract channel ID.");
 
-        private IReadOnlyList<Thumbnail> CreateThumbnails(string logoUrl)
-        {
-            var logoSize = Regex
-                .Matches(logoUrl, @"\bs(\d+)\b")
-                .Cast<Match>()
-                .LastOrDefault()?
-                .Groups[1]
-                .Value
-                .NullIfWhiteSpace()?
-                .ParseIntOrNull() ?? 100;
+        var title =
+            channelPage.TryGetChannelTitle() ??
+            throw new YoutubeExplodeException("Could not extract channel title.");
 
-            // Could potentially return multiple sizes
-            return new[]
-            {
-                new Thumbnail(logoUrl, new Resolution(logoSize, logoSize))
-            };
-        }
+        var logoUrl =
+            channelPage.TryGetChannelLogoUrl() ??
+            throw new YoutubeExplodeException("Could not extract channel logo URL.");
 
-        /// <summary>
-        /// Gets the metadata associated with the specified channel.
-        /// </summary>
-        public async ValueTask<Channel> GetAsync(
-            ChannelId channelId,
-            CancellationToken cancellationToken = default)
-        {
-            var channelPage = await _controller.GetChannelPageAsync(channelId, cancellationToken);
+        var logoSize = Regex
+            .Matches(logoUrl, @"\bs(\d+)\b")
+            .Cast<Match>()
+            .LastOrDefault()?
+            .Groups[1]
+            .Value
+            .NullIfWhiteSpace()?
+            .ParseIntOrNull() ?? 100;
 
-            var title =
-                channelPage.TryGetChannelTitle() ??
-                throw new YoutubeExplodeException("Could not extract channel title.");
+        var thumbnails = new[] { new Thumbnail(logoUrl, new Resolution(logoSize, logoSize)) };
 
-            var logoUrl =
-                channelPage.TryGetChannelLogoUrl() ??
-                throw new YoutubeExplodeException("Could not extract channel logo URL.");
+        return new Channel(channelId, title, thumbnails);
+    }
 
-            return new Channel(
-                channelId,
-                title,
-                CreateThumbnails(logoUrl)
-            );
-        }
+    /// <summary>
+    /// Gets the metadata associated with the specified channel.
+    /// </summary>
+    public async ValueTask<Channel> GetAsync(
+        ChannelId channelId,
+        CancellationToken cancellationToken = default) =>
+        Extract(await _controller.GetChannelPageAsync(channelId, cancellationToken));
 
-        /// <summary>
-        /// Gets the metadata associated with the channel of the specified user.
-        /// </summary>
-        public async ValueTask<Channel> GetByUserAsync(
-            UserName userName,
-            CancellationToken cancellationToken = default)
-        {
-            var channelPage = await _controller.GetChannelPageAsync(userName, cancellationToken);
+    /// <summary>
+    /// Gets the metadata associated with the channel of the specified user.
+    /// </summary>
+    public async ValueTask<Channel> GetByUserAsync(
+        UserName userName,
+        CancellationToken cancellationToken = default) =>
+        Extract(await _controller.GetChannelPageAsync(userName, cancellationToken));
 
-            var channelId =
-                channelPage.TryGetChannelId() ??
-                throw new YoutubeExplodeException("Could not extract channel ID.");
-
-            var title =
-                channelPage.TryGetChannelTitle() ??
-                throw new YoutubeExplodeException("Could not extract channel title.");
-
-            var logoUrl =
-                channelPage.TryGetChannelLogoUrl() ??
-                throw new YoutubeExplodeException("Could not extract channel logo URL.");
-
-            return new Channel(
-                channelId,
-                title,
-                CreateThumbnails(logoUrl)
-            );
-        }
-
-        /// <summary>
-        /// Enumerates videos uploaded by the specified channel.
-        /// </summary>
-        public IAsyncEnumerable<PlaylistVideo> GetUploadsAsync(
-            ChannelId channelId,
-            CancellationToken cancellationToken = default)
-        {
-            // Replace 'UC' in channel ID with 'UU'
-            var playlistId = "UU" + channelId.Value.Substring(2);
-
-            return new PlaylistClient(_controller).GetVideosAsync(playlistId, cancellationToken);
-        }
+    /// <summary>
+    /// Enumerates videos uploaded by the specified channel.
+    /// </summary>
+    // TODO: should return <IVideo> sequence instead (breaking change)
+    public IAsyncEnumerable<PlaylistVideo> GetUploadsAsync(
+        ChannelId channelId,
+        CancellationToken cancellationToken = default)
+    {
+        // Replace 'UC' in channel ID with 'UU'
+        var playlistId = "UU" + channelId.Value.Substring(2);
+        return new PlaylistClient(_http).GetVideosAsync(playlistId, cancellationToken);
     }
 }

@@ -3,51 +3,55 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using YoutubeExplode.Common;
 
-namespace YoutubeExplode.Videos
+namespace YoutubeExplode.Videos;
+
+/// <summary>
+/// Metadata associated with a YouTube video.
+/// </summary>
+public class Video : IVideo
 {
+    /// <inheritdoc />
+    public VideoId Id { get; }
+
+    /// <inheritdoc />
+    public string Url => $"https://www.youtube.com/watch?v={Id}";
+
+    /// <inheritdoc />
+    public string Title { get; }
+
+    /// <inheritdoc />
+    public Author Author { get; }
+
     /// <summary>
-    /// Metadata associated with a YouTube video.
+    /// Video upload date.
     /// </summary>
-    public class Video : IVideo
-    {
-        /// <inheritdoc />
-        public VideoId Id { get; }
+    public DateTimeOffset UploadDate { get; }
 
-        /// <inheritdoc />
-        public string Url => $"https://www.youtube.com/watch?v={Id}";
+    /// <summary>
+    /// Video description.
+    /// </summary>
+    public string Description { get; }
 
-        /// <inheritdoc />
-        public string Title { get; }
+    /// <inheritdoc />
+    public TimeSpan? Duration { get; }
 
-        /// <inheritdoc />
-        public Author Author { get; }
-
-        /// <summary>
-        /// Video upload date.
-        /// </summary>
-        public DateTimeOffset UploadDate { get; }
-
-        /// <summary>
-        /// Video description.
-        /// </summary>
-        public string Description { get; }
-
-        /// <inheritdoc />
-        public TimeSpan? Duration { get; }
-
-        /// <inheritdoc />
-        public IReadOnlyList<Thumbnail> Thumbnails { get; }
+    /// <inheritdoc />
+    public IReadOnlyList<Thumbnail> Thumbnails { get; }
 
         /// <summary>
         /// Available search keywords for the video.
         /// </summary>
         public IReadOnlyList<string> Keywords { get; }
         public string RelatedVideos { get; }
+    /// <summary>
+    /// Available search keywords for the video.
+    /// </summary>
+    public IReadOnlyList<string> Keywords { get; }
 
-        /// <summary>
-        /// Engagement statistics for the video.
-        /// </summary>
-        public Engagement Engagement { get; }
+    /// <summary>
+    /// Engagement statistics for the video.
+    /// </summary>
+    public Engagement Engagement { get; }
 
         /// <summary>
         /// Initializes an instance of <see cref="Video"/>.
@@ -76,8 +80,7 @@ namespace YoutubeExplode.Videos
             RelatedVideos = relatedVideos;
         }
 
-        /// <inheritdoc />
-        [ExcludeFromCodeCoverage]
-        public override string ToString() => $"Video ({Title})";
-    }
+    /// <inheritdoc />
+    [ExcludeFromCodeCoverage]
+    public override string ToString() => $"Video ({Title})";
 }

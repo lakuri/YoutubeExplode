@@ -1,35 +1,29 @@
 ﻿using System;
-using System.Collections.Generic;
+using YoutubeExplode.Videos.Streams;
 
-namespace YoutubeExplode.Converter
+namespace YoutubeExplode.Converter;
+
+/// <summary>
+/// Encapsulates conversion media format.
+/// </summary>
+[Obsolete("Use YoutubeExplode.Videos.Streams.Container instead")]
+public readonly struct ConversionFormat
 {
     /// <summary>
-    /// Encapsulates conversion media format.
+    /// Format name.
     /// </summary>
-    public readonly partial struct ConversionFormat
-    {
-        /// <summary>
-        /// Format name.
-        /// </summary>
-        public string Name { get; }
+    public string Name { get; }
 
-        /// <summary>
-        /// Whether this format is a known audio-only format.
-        /// </summary>
-        public bool IsAudioOnly => AudioOnlyFormats.Contains(Name);
+    /// <summary>
+    /// Whether this format is a known audio-only format.
+    /// </summary>
+    public bool IsAudioOnly => new Container(Name).IsAudioOnly();
 
-        /// <summary>
-        /// Initializes an instance of <see cref="ConversionFormat"/>.
-        /// </summary>
-        public ConversionFormat(string name) => Name = name;
+    /// <summary>
+    /// Initializes an instance of <see cref="ConversionFormat"/>.
+    /// </summary>
+    public ConversionFormat(string name) => Name = name;
 
-        /// <inheritdoc />
-        public override string ToString() => Name;
-    }
-
-    public partial struct ConversionFormat
-    {
-        private static readonly HashSet<string> AudioOnlyFormats = new(StringComparer.OrdinalIgnoreCase)
-            {"mp3", "m4a", "wav", "wma", "ogg", "aac", "opus"};
-    }
+    /// <inheritdoc />
+    public override string ToString() => Name;
 }
